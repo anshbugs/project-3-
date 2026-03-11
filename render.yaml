@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: groww-pulse-backend
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_MODEL
+        sync: false
+      - key: EMAIL_SENDER
+        sync: false
+      - key: EMAIL_PASSWORD
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: GROWW_SCHEDULER_RECIPIENT
+        sync: false
+      - key: GROWW_DATA_DIR
+        value: /app/data
+    healthCheckPath: /api/health
+
