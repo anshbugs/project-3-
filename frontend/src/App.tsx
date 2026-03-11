@@ -1,6 +1,9 @@
 import { FormEvent, useState } from "react";
 import "./styles.css";
 
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 export const App = () => {
   const [weeks, setWeeks] = useState(10);
   const [recipient, setRecipient] = useState("");
@@ -15,7 +18,7 @@ export const App = () => {
     setStatus(null);
 
     try {
-      const res = await fetch("http://localhost:8000/api/run", {
+      const res = await fetch(`${API_BASE}/api/run`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -47,7 +50,7 @@ export const App = () => {
 
       const poll = async (): Promise<boolean> => {
         try {
-          const statusRes = await fetch(`http://localhost:8000/api/run/status/${jobId}`);
+          const statusRes = await fetch(`${API_BASE}/api/run/status/${jobId}`);
           if (!statusRes.ok) {
             setStatus(`Error: failed to get status (${statusRes.status})`);
             return true;
