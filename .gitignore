@@ -1,8 +1,12 @@
-﻿.env
+.env
 __pycache__/
 *.pyc
 .data/
 data/
 frontend/node_modules/
 web/node_modules/
+.cursor/
+.venv/
+node_modules/
+*.log
 
