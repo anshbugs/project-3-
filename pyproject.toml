@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "groww-pulse"
+version = "0.1.0"
+description = "GROWW Play Store reviews weekly pulse pipeline."
+requires-python = ">=3.10"
+authors = [
+  { name = "GROWW Pulse" }
+]
+dependencies = [
+  "google-play-scraper>=1.2.5",
+  "python-dotenv>=1.0.0",
+  "langdetect>=1.0.9",
+  "openai>=1.12.0",
+  "groq>=0.9.0",
+  "google-generativeai>=0.7.0",
+  "markdown>=3.5.0",
+  "fastapi>=0.115.0",
+  "uvicorn[standard]>=0.30.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.0.0",
+]
+
+[project.scripts]
+groww-pulse = "groww_pulse.main:cli"
+
