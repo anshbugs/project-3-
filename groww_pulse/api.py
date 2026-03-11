@@ -124,7 +124,10 @@ def run(request: RunRequest) -> RunResponse:
 @app.get("/api/run/status/{job_id}", response_model=JobStatusResponse)
 def get_run_status(job_id: str) -> JobStatusResponse:
     if job_id not in _job_status:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Job not found. The server may have restarted (e.g. after inactivity). Please start a new run.",
+        )
     rec = _job_status[job_id]
     return JobStatusResponse(
         job_id=job_id,

@@ -57,6 +57,14 @@ export const App = () => {
       const poll = async (): Promise<boolean> => {
         try {
           const statusRes = await fetch(`${API_BASE}/api/run/status/${jobId}`);
+          if (statusRes.status === 404) {
+            const data = await statusRes.json().catch(() => ({}));
+            const msg =
+              (data?.detail as string) ||
+              "Run status was lost (server may have restarted). Please try again.";
+            setStatus(`Error: ${msg}`);
+            return true;
+          }
           if (!statusRes.ok) {
             setStatus(`Error: failed to get status (${statusRes.status})`);
             return true;
