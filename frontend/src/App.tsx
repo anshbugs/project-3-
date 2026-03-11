@@ -9,6 +9,7 @@ export const App = () => {
   const [recipient, setRecipient] = useState("");
   const [recipientName, setRecipientName] = useState("");
   const [sendEmail, setSendEmail] = useState(false);
+  const [runMode, setRunMode] = useState<"quick" | "full">("quick");
   const [isRunning, setIsRunning] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
@@ -24,6 +25,7 @@ export const App = () => {
         body: JSON.stringify({
           phase: "all",
           weeks,
+          max_reviews: runMode === "quick" ? 100 : 400,
           recipient: recipient || null,
           recipient_name: recipientName || null,
           send: sendEmail
@@ -43,7 +45,11 @@ export const App = () => {
         return;
       }
 
-      setStatus("Pipeline running (this may take a few minutes)…");
+      setStatus(
+        runMode === "quick"
+          ? "Pipeline running (quick run, ~3–5 min). Keep this tab open…"
+          : "Pipeline running (full run can take 10–15 min). Keep this tab open…"
+      );
 
       const pollInterval = 2500;
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -121,6 +127,20 @@ export const App = () => {
               onChange={(e) => setWeeks(Number(e.target.value))}
             />
             <span className="hint">Must be between 8 and 12 weeks.</span>
+          </div>
+
+          <div className="field">
+            <label>Run mode</label>
+            <select
+              value={runMode}
+              onChange={(e) => setRunMode(e.target.value as "quick" | "full")}
+            >
+              <option value="quick">Quick — 100 reviews (~3–5 min)</option>
+              <option value="full">Full — 400 reviews (~10–15 min)</option>
+            </select>
+            <span className="hint">
+              Quick runs finish faster and are more reliable on free hosting.
+            </span>
           </div>
 
           <div className="field">

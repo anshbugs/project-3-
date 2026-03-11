@@ -95,13 +95,16 @@ def run(request: RunRequest) -> RunResponse:
     job_id = str(uuid.uuid4())
     _job_status[job_id] = {"status": "pending", "message": "Job queued."}
 
+    # Default to 100 reviews for API runs so frontend-triggered runs finish in ~5 min.
+    max_reviews = request.max_reviews if request.max_reviews is not None else 100
+
     thread = threading.Thread(
         target=_run_pipeline_background,
         kwargs={
             "job_id": job_id,
             "phase": request.phase,
             "weeks": request.weeks,
-            "max_reviews": request.max_reviews,
+            "max_reviews": max_reviews,
             "date": request.date,
             "recipient": request.recipient,
             "recipient_name": request.recipient_name,
