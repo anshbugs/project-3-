@@ -6,6 +6,8 @@ from typing import Any, Dict, List, Sequence
 
 from openai import OpenAI
 
+from .retry_network import with_network_retry
+
 
 class OpenRouterConfig:
     """
@@ -62,13 +64,15 @@ def generate_themes_from_reviews(
     )
 
     client = _client()
-    resp = client.chat.completions.create(
-        model=cfg.model,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        temperature=0.3,
+    resp = with_network_retry(
+        lambda: client.chat.completions.create(
+            model=cfg.model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0.3,
+        )
     )
     content = resp.choices[0].message.content or "[]"
     try:
@@ -137,13 +141,15 @@ def classify_reviews_into_themes(
     )
 
     client = _client()
-    resp = client.chat.completions.create(
-        model=cfg.model,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        temperature=0.0,
+    resp = with_network_retry(
+        lambda: client.chat.completions.create(
+            model=cfg.model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0.0,
+        )
     )
     content = resp.choices[0].message.content or "[]"
     try:

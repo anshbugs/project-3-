@@ -12,6 +12,7 @@ from typing import Optional
 import markdown
 
 from .config import EmailConfig, ScrapeConfig
+from .retry_network import with_network_retry
 
 
 logger = logging.getLogger(__name__)
@@ -87,10 +88,13 @@ def _send_email(cfg: EmailConfig, msg: EmailMessage) -> None:
             "EMAIL_SENDER or EMAIL_PASSWORD not set; cannot send. Use dry-run without --send."
         )
 
-    with smtplib.SMTP(cfg.smtp_host, cfg.smtp_port) as server:
-        server.starttls()
-        server.login(cfg.sender, cfg.password)
-        server.send_message(msg)
+    def _do_send() -> None:
+        with smtplib.SMTP(cfg.smtp_host, cfg.smtp_port) as server:
+            server.starttls()
+            server.login(cfg.sender, cfg.password)
+            server.send_message(msg)
+
+    with_network_retry(_do_send)
 
 
 @dataclass

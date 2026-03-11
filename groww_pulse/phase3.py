@@ -12,6 +12,7 @@ from openai import OpenAI
 
 from .config import ScrapeConfig
 from .llm_openrouter import OpenRouterConfig
+from .retry_network import with_network_retry
 
 
 logger = logging.getLogger(__name__)
@@ -162,13 +163,15 @@ def _generate_markdown_pulse(
     )
 
     logger.info("Phase 3: calling OpenRouter to generate weekly pulse note")
-    resp = client.chat.completions.create(
-        model=ocfg.model,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        temperature=0.3,
+    resp = with_network_retry(
+        lambda: client.chat.completions.create(
+            model=ocfg.model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0.3,
+        )
     )
     text = resp.choices[0].message.content or ""
     return text.strip()
