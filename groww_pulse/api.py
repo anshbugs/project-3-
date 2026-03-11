@@ -36,6 +36,12 @@ def _run_pipeline_background(
     recipient_name: Optional[str],
     send: bool,
 ) -> None:
+    import os
+    import time
+    start_delay = int(os.getenv("GROWW_PIPELINE_START_DELAY", "0"))
+    if start_delay > 0:
+        logger.info("Waiting %s seconds before pipeline (container warm-up)", start_delay)
+        time.sleep(start_delay)
     try:
         _job_status[job_id] = {"status": "running", "message": "Pipeline started."}
         run_pipeline(
@@ -50,7 +56,14 @@ def _run_pipeline_background(
         _job_status[job_id] = {"status": "completed", "message": "Pipeline finished successfully."}
     except Exception as exc:
         logger.exception("Pipeline job %s failed", job_id)
-        _job_status[job_id] = {"status": "failed", "error": str(exc)}
+        err_msg = str(exc)
+        if "101" in err_msg or "Network is unreachable" in err_msg or "Network unreachable" in err_msg:
+            err_msg = (
+                "Backend could not reach the internet (OpenRouter or email). "
+                "On Render free tier, ensure the service allows outbound HTTPS; "
+                "or run the pipeline locally / via GitHub Actions."
+            )
+        _job_status[job_id] = {"status": "failed", "error": err_msg}
 
 
 class RunRequest(BaseModel):
@@ -116,6 +129,17 @@ def get_run_status(job_id: str) -> JobStatusResponse:
         message=rec.get("message"),
         error=rec.get("error"),
     )
+
+
+@app.get("/")
+def root() -> dict:
+    """Root route so the backend URL does not return 404."""
+    return {
+        "service": "GROWW Weekly Pulse API",
+        "docs": "/docs",
+        "health": "/api/health",
+        "run": "POST /api/run",
+    }
 
 
 @app.get("/api/health")
