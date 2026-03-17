@@ -8,11 +8,8 @@ from datetime import datetime, date
 from glob import glob
 from typing import Any, Dict, List, Tuple
 
-from openai import OpenAI
-
 from .config import ScrapeConfig
-from .llm_openrouter import OpenRouterConfig
-from .retry_network import with_network_retry
+from .llm_gemini import generate_pulse_markdown
 
 
 logger = logging.getLogger(__name__)
@@ -94,87 +91,9 @@ def _generate_markdown_pulse(
     quotes: List[Dict[str, Any]],
     report_date: date,
 ) -> str:
-    # Use the same OpenRouter client as Phase 2, but with a different prompt
-    # to generate the weekly pulse markdown.
-    ocfg = OpenRouterConfig()
-    client = OpenAI(
-        base_url="https://openrouter.ai/api/v1",
-        api_key=ocfg.api_key,
-    )
-
-    themes_for_prompt = [
-        {
-            "id": t["id"],
-            "label": t["label"],
-            "description": t["description"],
-            "count": t.get("count", 0),
-            "avg_rating": round(t.get("avg_rating", 0.0), 2),
-        }
-        for t in top_themes
-    ]
-
-    quotes_for_prompt = [
-        {
-            "reviewId": q.get("reviewId"),
-            "rating": int(q.get("rating", 0)),
-            "text": q.get("text", ""),
-        }
-        for q in quotes
-    ]
-
     week_of = report_date.isoformat()
-
-    system_prompt = (
-        "You are a product communications writer at GROWW. "
-        "You write concise, scannable weekly updates for product, growth, support, and leadership."
-    )
-
-    user_prompt = (
-        f"Using the themed review data below, write a concise Weekly Review Pulse note for GROWW.\n\n"
-        f"Week of: {week_of}\n\n"
-        f"Top themes (JSON):\n{json.dumps(themes_for_prompt, ensure_ascii=False, indent=2)}\n\n"
-        f"Candidate quotes (JSON):\n{json.dumps(quotes_for_prompt, ensure_ascii=False, indent=2)}\n\n"
-        "Requirements:\n"
-        "- Structure the note in Markdown exactly as:\n"
-        "  ## GROWW Weekly Review Pulse — Week of {date}\n"
-        "  \n"
-        "  ### Top Themes\n"
-        "  1. ...\n"
-        "  2. ...\n"
-        "  3. ...\n"
-        "  \n"
-        "  ### Real User Quotes\n"
-        "  - \"quote\" — {rating}★\n"
-        "  - ... (total 3 quotes)\n"
-        "  \n"
-        "  ### Action Ideas\n"
-        "  1. ...\n"
-        "  2. ...\n"
-        "  3. ...\n"
-        "- Use exactly the 3 themes provided as Top Themes (no more than 3).\n"
-        "- Use exactly 3 quotes, chosen from the provided candidate quotes only. Do not invent or modify quotes.\n"
-        "- Each quote line must include the star rating.\n"
-        "- Propose exactly 3 concrete, theme-linked action ideas.\n"
-        "- Total length must be under 250 words.\n"
-        "- Do not include any personally identifying information (names, emails, phone numbers). "
-        "If a quote seems to contain a name, replace it with [User].\n"
-        "- Keep language plain, concise, and scannable.\n"
-        "Return ONLY the markdown for the note, no extra commentary.\n"
-    )
-
-    logger.info("Phase 3: calling OpenRouter to generate weekly pulse note")
-    resp = with_network_retry(
-        lambda: client.chat.completions.create(
-            model=ocfg.model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=0.3,
-        )
-    )
-    text = resp.choices[0].message.content or ""
-    return text.strip()
+    logger.info("Phase 3: calling Gemini to generate weekly pulse note")
+    return generate_pulse_markdown(grouped, top_themes, quotes, week_of)
 
 
 def run_phase3(report_date_str: str | None = None) -> Dict[str, str]:

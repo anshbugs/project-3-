@@ -10,7 +10,7 @@ from glob import glob
 from typing import Any, Dict, List, Sequence
 
 from .config import ScrapeConfig
-from .llm_openrouter import classify_reviews_into_themes, generate_themes_from_reviews
+from .llm_gemini import classify_reviews_into_themes, generate_themes_from_reviews
 
 
 logger = logging.getLogger(__name__)
