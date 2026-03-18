@@ -9,4 +9,6 @@ web/node_modules/
 .venv/
 node_modules/
 *.log
+frontend/dist/
+frontend/dist/**
 
