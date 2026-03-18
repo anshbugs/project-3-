@@ -8,7 +8,7 @@ from datetime import datetime, date
 from glob import glob
 from typing import Any, Dict, List, Tuple
 
-from openai import OpenAI
+import httpx
 
 from .config import ScrapeConfig
 from .llm_openrouter import OpenRouterConfig
@@ -97,10 +97,6 @@ def _generate_markdown_pulse(
     # Use the same OpenRouter client as Phase 2, but with a different prompt
     # to generate the weekly pulse markdown.
     ocfg = OpenRouterConfig()
-    client = OpenAI(
-        base_url="https://openrouter.ai/api/v1",
-        api_key=ocfg.api_key,
-    )
 
     themes_for_prompt = [
         {
@@ -163,17 +159,27 @@ def _generate_markdown_pulse(
     )
 
     logger.info("Phase 3: calling OpenRouter to generate weekly pulse note")
-    resp = with_network_retry(
-        lambda: client.chat.completions.create(
-            model=ocfg.model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=0.3,
-        )
-    )
-    text = resp.choices[0].message.content or ""
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {ocfg.api_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": ocfg.model,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        "temperature": 0.3,
+    }
+
+    def _do() -> str:
+        resp = httpx.post(url, headers=headers, json=payload, timeout=120)
+        resp.raise_for_status()
+        data = resp.json()
+        return data["choices"][0]["message"]["content"]
+
+    text = with_network_retry(_do) or ""
     return text.strip()
 
 

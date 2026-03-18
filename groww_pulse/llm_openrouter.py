@@ -4,10 +4,9 @@ import json
 import os
 from typing import Any, Dict, List, Sequence
 
-from openai import OpenAI
-
 from .retry_network import with_network_retry
 from .env_vars import get_secret
+import httpx
 
 
 class OpenRouterConfig:
@@ -17,7 +16,7 @@ class OpenRouterConfig:
 
     def __init__(self) -> None:
         self.api_key = get_secret("OPENROUTER_API_KEY", "")
-        self.model = os.getenv(
+        self.model = get_secret(
             "OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct"
         )
         if not self.model:
@@ -28,13 +27,26 @@ class OpenRouterConfig:
             )
 
 
-def _client() -> OpenAI:
+def _chat_completion(messages: List[Dict[str, str]], temperature: float) -> str:
     cfg = OpenRouterConfig()
-    # OpenRouter is OpenAI-compatible with its own base URL.
-    return OpenAI(
-        base_url="https://openrouter.ai/api/v1",
-        api_key=cfg.api_key,
-    )
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {cfg.api_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": cfg.model,
+        "messages": messages,
+        "temperature": temperature,
+    }
+
+    def _do() -> str:
+        resp = httpx.post(url, headers=headers, json=payload, timeout=120)
+        resp.raise_for_status()
+        data = resp.json()
+        return data["choices"][0]["message"]["content"]
+
+    return with_network_retry(_do)
 
 
 def generate_themes_from_reviews(
@@ -66,18 +78,11 @@ def generate_themes_from_reviews(
         '\"description\": \"Speed, crashes, and general reliability\"}]'
     )
 
-    client = _client()
-    resp = with_network_retry(
-        lambda: client.chat.completions.create(
-            model=cfg.model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=0.3,
-        )
-    )
-    content = resp.choices[0].message.content or "[]"
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt},
+    ]
+    content = _chat_completion(messages=messages, temperature=0.3) or "[]"
     try:
         data = json.loads(content)
     except json.JSONDecodeError:
@@ -143,18 +148,11 @@ def classify_reviews_into_themes(
         "Return no extra commentary or keys."
     )
 
-    client = _client()
-    resp = with_network_retry(
-        lambda: client.chat.completions.create(
-            model=cfg.model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=0.0,
-        )
-    )
-    content = resp.choices[0].message.content or "[]"
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt},
+    ]
+    content = _chat_completion(messages=messages, temperature=0.0) or "[]"
     try:
         data = json.loads(content)
     except json.JSONDecodeError:
