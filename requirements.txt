@@ -1,0 +1,11 @@
+google-play-scraper>=1.2.5
+python-dotenv>=1.0.0
+langdetect>=1.0.9
+openai>=1.12.0
+groq>=0.9.0
+google-generativeai>=0.7.0
+markdown>=3.5.0
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+streamlit>=1.35.0
+

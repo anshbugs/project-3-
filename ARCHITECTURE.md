@@ -472,7 +472,23 @@ python -m groww_pulse.main \
 
 ---
 
-### 7.3 Weekly Scheduler
+### 7.3 Streamlit Backend UI
+
+For paid deployments where REST connectivity may be unreliable (or you want a simple single-host setup), you can deploy the backend as a **Streamlit app** that directly runs the existing pipeline.
+
+- **Entry point**: `streamlit_app.py` (repo root).
+- **How it works**:
+  - Streamlit provides a form (weeks, max reviews, recipient email/name, and a checkbox to actually send).
+  - On submit it calls `run_pipeline(phase="all", ...)` and then shows the latest generated note path and latest `.eml` draft/sent path.
+- **Deployment**:
+  - Use `Dockerfile.streamlit` for Docker-based Streamlit hosting, or configure Streamlit to run `streamlit_app.py`.
+- **Required env vars** (set in the Streamlit hosting panel):
+  - `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`
+  - `EMAIL_SENDER`, `EMAIL_PASSWORD`, `SMTP_HOST`, `SMTP_PORT`
+- **Scheduler**:
+  - You can still use GitHub Actions / `run_scheduler.py` separately if you want automatic weekly runs.
+
+### 7.4 Weekly Scheduler
 
 A **scheduler** runs the full weekly pulse pipeline **once per week at a fixed time** (default **Monday 11pm** local time) and **sends the email** to a fixed recipient.
 
