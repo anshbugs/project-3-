@@ -10,6 +10,7 @@ import streamlit as st
 
 from groww_pulse.config import ScrapeConfig
 from groww_pulse.main import run_pipeline
+from groww_pulse.env_vars import get_secret
 
 
 def _setup_logging() -> None:
@@ -42,6 +43,16 @@ def main() -> None:
 
     _setup_logging()
     data_cfg = ScrapeConfig()
+
+    with st.sidebar:
+        st.subheader("Config check")
+        st.write("OPENROUTER_API_KEY present:", bool(get_secret("OPENROUTER_API_KEY", "")))
+        st.write("OPENROUTER_MODEL:", get_secret("OPENROUTER_MODEL", "" ) or "(not set)")
+        st.write("EMAIL_SENDER present:", bool(get_secret("EMAIL_SENDER", "")))
+        st.write("EMAIL_PASSWORD present:", bool(get_secret("EMAIL_PASSWORD", "")))
+        st.write("SMTP_HOST:", get_secret("SMTP_HOST", "") or "(not set)")
+        st.write("SMTP_PORT:", get_secret("SMTP_PORT", "") or "(not set)")
+        st.caption("Keys are not displayed—only whether they are present.")
 
     with st.form("run_form"):
         weeks = st.number_input("Weeks window (8–12)", min_value=8, max_value=12, value=10)
