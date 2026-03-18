@@ -13,7 +13,7 @@ def get_secret(key: str, default: str = "") -> str:
     """
     val = os.getenv(key)
     if val is not None and str(val).strip() != "":
-        return str(val)
+        return str(val).strip()
 
     # Optional Streamlit Cloud integration.
     # Streamlit's `st.secrets` behaves like a mapping but may not support `key in st.secrets`,
@@ -26,7 +26,7 @@ def get_secret(key: str, default: str = "") -> str:
                 sval: Any = st.secrets[key]  # type: ignore[index]
                 if sval is None:
                     return default
-                return str(sval)
+                return str(sval).strip()
             except KeyError:
                 return default
     except Exception:

@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Optional
 
 import streamlit as st
+import hashlib
 
 from groww_pulse.config import ScrapeConfig
 from groww_pulse.main import run_pipeline
@@ -46,8 +47,15 @@ def main() -> None:
 
     with st.sidebar:
         st.subheader("Config check")
-        st.write("OPENROUTER_API_KEY present:", bool(get_secret("OPENROUTER_API_KEY", "")))
-        st.write("OPENROUTER_MODEL:", get_secret("OPENROUTER_MODEL", "" ) or "(not set)")
+        openrouter_key = get_secret("OPENROUTER_API_KEY", "")
+        openrouter_model = get_secret("OPENROUTER_MODEL", "")
+        st.write("OPENROUTER_API_KEY present:", bool(openrouter_key))
+        st.write("OPENROUTER_API_KEY length:", len(openrouter_key))
+        st.write(
+            "OPENROUTER_API_KEY fingerprint:",
+            hashlib.sha256(openrouter_key.encode()).hexdigest()[:12] if openrouter_key else "(missing)",
+        )
+        st.write("OPENROUTER_MODEL:", openrouter_model or "(not set)")
         st.write("EMAIL_SENDER present:", bool(get_secret("EMAIL_SENDER", "")))
         st.write("EMAIL_PASSWORD present:", bool(get_secret("EMAIL_PASSWORD", "")))
         st.write("SMTP_HOST:", get_secret("SMTP_HOST", "") or "(not set)")

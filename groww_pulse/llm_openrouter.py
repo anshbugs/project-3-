@@ -15,7 +15,7 @@ class OpenRouterConfig:
     """
 
     def __init__(self) -> None:
-        self.api_key = get_secret("OPENROUTER_API_KEY", "")
+        self.api_key = get_secret("OPENROUTER_API_KEY", "").strip()
         self.model = get_secret(
             "OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct"
         )
