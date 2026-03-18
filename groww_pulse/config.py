@@ -5,6 +5,8 @@ from dataclasses import dataclass
 
 from dotenv import load_dotenv
 
+from .env_vars import get_secret
+
 
 load_dotenv()
 
@@ -35,7 +37,7 @@ class ScrapeConfig:
 
 @dataclass(frozen=True)
 class GeminiConfig:
-    api_key: str = os.getenv("GEMINI_API_KEY", "")
+    api_key: str = get_secret("GEMINI_API_KEY", "")
     model: str = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
 
     def ensure_present(self) -> None:
@@ -47,11 +49,11 @@ class GeminiConfig:
 
 @dataclass(frozen=True)
 class EmailConfig:
-    sender: str = os.getenv("EMAIL_SENDER", "")
-    password: str = os.getenv("EMAIL_PASSWORD", "")
-    smtp_host: str = os.getenv("SMTP_HOST", "smtp.gmail.com")
-    smtp_port: int = int(os.getenv("SMTP_PORT", "587"))
-    default_recipient: str = os.getenv("EMAIL_RECIPIENT", "")
+    sender: str = get_secret("EMAIL_SENDER", "")
+    password: str = get_secret("EMAIL_PASSWORD", "")
+    smtp_host: str = get_secret("SMTP_HOST", "smtp.gmail.com")
+    smtp_port: int = int(get_secret("SMTP_PORT", "587"))
+    default_recipient: str = get_secret("EMAIL_RECIPIENT", "")
 
 
 @dataclass(frozen=True)

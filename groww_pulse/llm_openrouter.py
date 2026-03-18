@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Sequence
 from openai import OpenAI
 
 from .retry_network import with_network_retry
+from .env_vars import get_secret
 
 
 class OpenRouterConfig:
@@ -15,10 +16,12 @@ class OpenRouterConfig:
     """
 
     def __init__(self) -> None:
-        self.api_key = os.getenv("OPENROUTER_API_KEY", "")
+        self.api_key = get_secret("OPENROUTER_API_KEY", "")
         self.model = os.getenv(
             "OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct"
         )
+        if not self.model:
+            self.model = "meta-llama/llama-3.3-70b-instruct"
         if not self.api_key:
             raise RuntimeError(
                 "OPENROUTER_API_KEY is not set. Please add it to your environment or .env file."
