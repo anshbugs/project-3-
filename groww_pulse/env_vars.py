@@ -15,16 +15,22 @@ def get_secret(key: str, default: str = "") -> str:
     if val is not None and str(val).strip() != "":
         return str(val)
 
-    # Optional Streamlit Cloud integration
+    # Optional Streamlit Cloud integration.
+    # Streamlit's `st.secrets` behaves like a mapping but may not support `key in st.secrets`,
+    # depending on version/runtime. Use indexing + KeyError to be safe.
     try:
         import streamlit as st  # type: ignore
 
-        if hasattr(st, "secrets") and key in st.secrets:  # pragma: no cover
-            sval: Any = st.secrets[key]
-            if sval is None:
+        if hasattr(st, "secrets"):
+            try:
+                sval: Any = st.secrets[key]  # type: ignore[index]
+                if sval is None:
+                    return default
+                return str(sval)
+            except KeyError:
                 return default
-            return str(sval)
     except Exception:
+        # If Streamlit isn't available (e.g. local CLI runs), ignore and fall back.
         pass
 
     return default
